@@ -1,0 +1,130 @@
+{%extends 'components/estructura.html'%}
+{%block titulo%} Pizzeria {%endblock%}
+
+{%block contenido%}
+
+<main class="min-vh-100 d-flex justify-content-center align-items-center">
+    <div class="container">
+        <h1 class="text-center mb-4">Pedido de Pizza</h1>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{url_for('salir')}}">Cerrar Sesion</a>
+                </li>
+            </ul>
+        {%import 'components/_macro.html' as macros%}
+        <form method="POST" class="row g-3">
+            {{ form.csrf_token }}
+            <div class="col-12 col-md-4">
+                {{ macros.render_campos_persona(form.nombre) }}
+                {{ macros.render_campos_pizza(form.tamanio) }}
+            </div>
+            <div class="col-12 col-md-4">
+                {{ macros.render_campos_persona(form.direccion) }}
+                {{ macros.render_campos_pizza_ingre(form.jamon) }} <!-- Jamón checkbox -->
+                {{ macros.render_campos_pizza_ingre(form.pina) }} <!-- Piña checkbox -->
+                {{ macros.render_campos_pizza_ingre(form.champi) }} <!-- Champiñón checkbox -->
+            </div>
+            <div class="col-12 col-md-4">
+                {{ macros.render_campos_persona(form.telefono) }}
+                {{ macros.render_campos_persona(form.num_pizza) }}
+            </div>
+            <div class="d-flex justify-content-center">
+                {{ form.submit(class="btn btn-primary w-50") }}
+            </div>
+        </form>
+
+        <div class="row mt-5">
+            <h1 class="text-center mb-4">2</h1>
+            <div class="col-12 col-md-6 text-center">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">tamaño</th>
+                            <th scope="col">ingredientes</th>
+                            <th scope="col">Num pizzas</th>
+                            <th scope="col">sub total</th>
+                            <th scope="col">--</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%for pedido in data%}
+                        <tr>
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>{{ pedido[3] }}</td> <!-- Tamaño de la pizza -->
+                            <td>{{ pedido[4:-2] }}</td> <!-- Ingredientes -->
+                            <td>{{ pedido[-2] }}</td> <!-- Cantidad de pizzas -->
+                            <td>${{ pedido[-1] }}</td> <!-- Subtotal -->
+                            <em></em>
+                            <td>
+                                <a href="quitar?numero={{ loop.index - 1}}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-trash3" viewBox="0 0 16 16">
+                                        <path
+                                            d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                                    </svg>
+                                    Quitar pizza
+                                </a>
+                            </td>
+                        </tr>
+                        {%endfor%}
+
+
+                    </tbody>
+                </table>
+                <div class="mt-5 d-flex justify-content-center align-items-center">
+                    <form action="/terminar" method="post">
+                        {{form.csrf_token}}
+
+                        <button class="btn btn-success">Comprar</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 text-center border border-secondary rounded p4">
+                <h4>Ventas del dia</h4>
+                <form method="POST" action="/ventas">
+                    {{form.csrf_token}}
+                    <label for="periodo">Selecciona el periodo:</label><br>
+                    <input type="radio" id="dia" name="periodo" value="dia">
+                    <label for="dia">Día</label><br>
+                    <input type="radio" id="mes" name="periodo" value="mes">
+                    <label for="mes">Mes</label><br>
+                    <input type="date" id="fechatotal" name="fechatotal" class="form-control w-50">
+                    <label for="fechatotal">Fecha específica</label><br>
+
+                    <button type="submit" class="btn btn-warning mb-4">Buscar Ventas</button>
+                </form>
+
+
+                <div class="overflow-scroll border border-secondary h-50">
+                    {% if ventas %}
+
+                    {% for venta in ventas %}
+                    <div class="d-flex justify-content-center align-items-center">
+                        <h3>{{ venta.persona.nombre }}</h3>
+                        <p class="h4 mx-2">${{ venta.total }}</p>
+                    </div>
+                    {% endfor %}
+
+
+                    {% else %}
+                    <p>No hay ventas para el periodo seleccionado.</p>
+                    {% endif %}
+                    <p class="h3">Total Ventas: ${{ total_ventas }}</p>
+
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                    <ul class=flashes>
+                        {% for message in messages %}
+                        <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+</main>
+
+{%endblock%}
